@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skill Gap Analyzer</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; max-width: 1100px; }
+    h1 { margin-bottom: 8px; }
+    label { display: block; margin-top: 14px; font-weight: 600; }
+
+    /* UPDATED: include file input styling */
+    select, textarea, button, input[type="file"] { width: 100%; margin-top: 6px; padding: 10px; font-size: 14px; }
+
+    textarea { min-height: 140px; resize: vertical; }
+    button { cursor: pointer; margin-top: 12px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+    .card h3 { margin: 0 0 8px 0; font-size: 16px; }
+    ul { margin: 0; padding-left: 18px; }
+    .status { margin-top: 12px; }
+    .error { color: #b00020; }
+    .pill { display:inline-block; padding: 6px 10px; border:1px solid #ddd; border-radius: 999px; }
+    .score { font-size: 22px; font-weight: 700; }
+    .muted { color:#555; font-size: 13px; }
+    .btnRow { display:flex; gap: 10px; margin-top: 10px; }
+    .btnRow button { width: 33.33%; }
+
+    /* NEW: upload row layout */
+    .uploadRow { display: grid; grid-template-columns: 1fr 220px; gap: 10px; align-items: end; margin-top: 10px; }
+    .uploadRow button { margin-top: 6px; }
+
+    /* NEW: simple bar visuals (no libraries) */
+    .barTrack { border:1px solid #ddd; border-radius:10px; height:14px; overflow:hidden; }
+    .barFill { height:14px; width:0%; background:#4c8bf5; transition: width 0.5s ease; }
+  </style>
+</head>
+<body>
+  <h1>AI-Powered Job Application & Skill Gap Analyzer</h1>
+  <p class="muted">Role Gap + JD Match Score + AI Resume Suggestions (rule-based AI-ready).</p>
+
+  <label for="role">Select Role</label>
+  <select id="role">
+    <option value="">Loading roles...</option>
+  </select>
+
+  <!-- NEW: Resume Upload -->
+  <div class="uploadRow">
+    <div>
+      <label for="resumeFile">Upload Resume (PDF or DOCX)</label>
+      <input id="resumeFile" type="file" accept=".pdf,.docx" />
+      <p class="muted" style="margin:6px 0 0 0;">Upload fills Resume Text automatically.</p>
+    </div>
+    <div>
+      <button id="uploadBtn">Upload & Extract</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="resumeText">Resume Text</label>
+      <textarea id="resumeText" placeholder="Paste your resume text here..."></textarea>
+    </div>
+    <div>
+      <label for="jdText">Job Description Text</label>
+      <textarea id="jdText" placeholder="Paste the job description here (for Match JD / AI Suggestions)..."></textarea>
+    </div>
+  </div>
+
+  <div class="btnRow">
+    <button id="analyzeBtn">Analyze Role Gap</button>
+    <button id="matchBtn">Match JD (ATS Score)</button>
+    <button id="aiBtn">AI Improve Resume</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <!-- ROLE GAP RESULTS -->
+  <div class="grid3" id="roleResults" style="display:none;">
+    <div class="card">
+      <h3>Extracted Skills (from Resume)</h3>
+      <ul id="extractedList"></ul>
+    </div>
+    <div class="card">
+      <h3>Matched Skills (Role)</h3>
+      <ul id="matchedList"></ul>
+    </div>
+    <div class="card">
+      <h3>Missing Skills (Role)</h3>
+      <ul id="missingList"></ul>
+    </div>
+  </div>
+
+  <!-- JD MATCH RESULTS -->
+  <div class="grid2" id="jdResults" style="display:none;">
+    <div class="card">
+      <h3>JD Match Score</h3>
+      <div class="pill"><span class="score" id="scoreEl">0%</span></div>
+
+      <!-- NEW: Progress bar for score -->
+      <div style="margin-top:10px;">
+        <div class="muted">Match Score</div>
+        <div class="barTrack">
+          <div id="scoreBar" class="barFill"></div>
+        </div>
+      </div>
+
+      <!-- NEW: Keyword coverage bars -->
+      <div style="margin-top:12px;">
+        <div class="muted">Keyword Coverage</div>
+
+        <div style="margin-top:8px;">
+          <div class="muted" id="kwMatchedMeta"></div>
+          <div class="barTrack">
+            <div id="kwMatchedBar" class="barFill"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <div class="muted" id="kwMissingMeta"></div>
+          <div class="barTrack">
+            <div id="kwMissingBar" class="barFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="muted" id="scoreMeta" style="margin-top:10px;"></p>
+
+      <h3 style="margin-top:12px;">ATS Warnings</h3>
+      <ul id="warningsList"></ul>
+
+      <h3 style="margin-top:12px;">Suggestions</h3>
+      <ul id="suggestionsList"></ul>
+    </div>
+
+    <div class="card">
+      <h3>JD Keyword Coverage</h3>
+      <p class="muted">Matched keywords</p>
+      <ul id="jdMatchedList"></ul>
+
+      <p class="muted" style="margin-top:12px;">Missing keywords</p>
+      <ul id="jdMissingList"></ul>
+    </div>
+  </div>
+
+  <!-- AI SUGGESTIONS RESULTS -->
+  <div class="grid2" id="aiResults" style="display:none;">
+    <div class="card">
+      <h3>AI-Style Rewritten Bullets</h3>
+      <ul id="aiBulletsList"></ul>
+    </div>
+    <div class="card">
+      <h3>AI Tips</h3>
+      <ul id="aiTipsList"></ul>
+
+      <h3 style="margin-top:12px;">Missing Keywords Used</h3>
+      <ul id="aiMissingList"></ul>
+    </div>
+  </div>
+
+  <script>
+    const apiAnalyzeUrl = "http://127.0.0.1:5000/analyze_text";
+    const apiRolesUrl = "http://127.0.0.1:5000/roles";
+    const apiMatchJdUrl = "http://127.0.0.1:5000/match_jd";
+    const apiAiUrl = "http://127.0.0.1:5000/ai_suggestions";
+
+    // NEW: upload endpoint
+    const apiUploadUrl = "http://127.0.0.1:5000/upload_resume";
+
+    const roleEl = document.getElementById("role");
+    const resumeTextEl = document.getElementById("resumeText");
+    const jdTextEl = document.getElementById("jdText");
+
+    // NEW: upload controls
+    const resumeFileEl = document.getElementById("resumeFile");
+    const uploadBtn = document.getElementById("uploadBtn");
+
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const matchBtn = document.getElementById("matchBtn");
+    const aiBtn = document.getElementById("aiBtn");
+
+    const statusEl = document.getElementById("status");
+
+    const roleResultsEl = document.getElementById("roleResults");
+    const jdResultsEl = document.getElementById("jdResults");
+    const aiResultsEl = document.getElementById("aiResults");
+
+    const extractedList = document.getElementById("extractedList");
+    const matchedList = document.getElementById("matchedList");
+    const missingList = document.getElementById("missingList");
+
+    const scoreEl = document.getElementById("scoreEl");
+    const scoreMeta = document.getElementById("scoreMeta");
+    const warningsList = document.getElementById("warningsList");
+    const suggestionsList = document.getElementById("suggestionsList");
+    const jdMatchedList = document.getElementById("jdMatchedList");
+    const jdMissingList = document.getElementById("jdMissingList");
+
+    const aiBulletsList = document.getElementById("aiBulletsList");
+    const aiTipsList = document.getElementById("aiTipsList");
+    const aiMissingList = document.getElementById("aiMissingList");
+
+    // NEW: visualization elements
+    const scoreBar = document.getElementById("scoreBar");
+    const kwMatchedBar = document.getElementById("kwMatchedBar");
+    const kwMissingBar = document.getElementById("kwMissingBar");
+    const kwMatchedMeta = document.getElementById("kwMatchedMeta");
+    const kwMissingMeta = document.getElementById("kwMissingMeta");
+
+    function fillList(ul, items) {
+      ul.innerHTML = "";
+      (items || []).forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        ul.appendChild(li);
+      });
+    }
+
+    async function loadRoles() {
+      try {
+        const res = await fetch(apiRolesUrl);
+        const data = await res.json();
+        roleEl.innerHTML = "";
+        data.roles.forEach(role => {
+          const option = document.createElement("option");
+          option.value = role;
+          option.textContent = role;
+          roleEl.appendChild(option);
+        });
+      } catch (err) {
+        roleEl.innerHTML = "<option>Error loading roles</option>";
+      }
+    }
+
+    function resetUI() {
+      statusEl.textContent = "";
+      statusEl.className = "status";
+      roleResultsEl.style.display = "none";
+      jdResultsEl.style.display = "none";
+      aiResultsEl.style.display = "none";
+
+      // reset bars
+      if (scoreBar) scoreBar.style.width = "0%";
+      if (kwMatchedBar) kwMatchedBar.style.width = "0%";
+      if (kwMissingBar) kwMissingBar.style.width = "0%";
+      if (kwMatchedMeta) kwMatchedMeta.textContent = "";
+      if (kwMissingMeta) kwMissingMeta.textContent = "";
+    }
+
+    // NEW: upload handler
+    uploadBtn.addEventListener("click", async () => {
+      resetUI();
+
+      const file = resumeFileEl.files && resumeFileEl.files[0];
+      if (!file) {
+        statusEl.textContent = "Please choose a PDF or DOCX file first.";
+        statusEl.className = "status error";
+        return;
+      }
+
+      statusEl.textContent = "Uploading & extracting resume...";
+      statusEl.className = "status";
+
+      try {
+        const fd = new FormData();
+        fd.append("resume_file", file);
+
+        const res = await fetch(apiUploadUrl, {
+          method: "POST",
+          body: fd
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data && data.error ? data.error : ("Upload failed: " + res.status));
+        }
+
+        resumeTextEl.value = data.extracted_text || "";
+        statusEl.textContent = "Resume extracted ✅ You can now run Analyze / Match JD / AI Improve.";
+      } catch (err) {
+        statusEl.textContent = "Error: " + err.message + " (Is Flask running?)";
+        statusEl.className = "status error";
+      }
+    });
+
+    analyzeBtn.addEventListener("click", async () => {
+      resetUI();
+
+      const role = roleEl.value;
+      const resume_text = resumeTextEl.value.trim();
+
+      if (!role) {
+        statusEl.textContent = "Please select a role.";
+        statusEl.className = "status error";
+        return;
+      }
+      if (!resume_text) {
+        statusEl.textContent = "Please paste resume text first (or upload a resume).";
+        statusEl.className = "status error";
+        return;
+      }
+
+      statusEl.textContent = "Analyzing role gap...";
+
+      try {
+        const res = await fetch(apiAnalyzeUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role, resume_text })
+        });
+
+        if (!res.ok) throw new Error("API request failed: " + res.status);
+
+        const data = await res.json();
+
+        fillList(extractedList, data.extracted_skills);
+        fillList(matchedList, data.matched_skills);
+        fillList(missingList, data.missing_skills);
+
+        statusEl.textContent = "Done ✅ (Role Gap)";
+        roleResultsEl.style.display = "grid";
+      } catch (err) {
+        statusEl.textContent = "Error: " + err.message + " (Is Flask running?)";
+        statusEl.className = "status error";
+      }
+    });
+
+    matchBtn.addEventListener("click", async () => {
+      resetUI();
+
+      const role = roleEl.value;
+      const resume_text = resumeTextEl.value.trim();
+      const jd_text = jdTextEl.value.trim();
+
+      if (!role) {
+        statusEl.textContent = "Please select a role.";
+        statusEl.className = "status error";
+        return;
+      }
+      if (!resume_text) {
+        statusEl.textContent = "Please paste resume text first (or upload a resume).";
+        statusEl.className = "status error";
+        return;
+      }
+      if (!jd_text) {
+        statusEl.textContent = "Please paste the Job Description text for Match JD.";
+        statusEl.className = "status error";
+        return;
+      }
+
+      statusEl.textContent = "Computing JD match score...";
+
+      try {
+        const res = await fetch(apiMatchJdUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role, resume_text, jd_text })
+        });
+
+        if (!res.ok) throw new Error("API request failed: " + res.status);
+
+        const data = await res.json();
+
+        // score text
+        scoreEl.textContent = `${data.match_score}%`;
+        scoreMeta.textContent = `JD targets source: ${data.jd_targets_source} • Weights: JD ${data.weights.jd}, Role ${data.weights.role}`;
+
+        // visualization bars
+        if (scoreBar) scoreBar.style.width = `${data.match_score}%`;
+
+        const matched = (data.keyword_coverage && data.keyword_coverage.matched) ? data.keyword_coverage.matched : [];
+        const missing = (data.keyword_coverage && data.keyword_coverage.missing) ? data.keyword_coverage.missing : [];
+        const total = matched.length + missing.length;
+
+        const matchedPct = total ? Math.round((matched.length / total) * 100) : 0;
+        const missingPct = total ? Math.round((missing.length / total) * 100) : 0;
+
+        if (kwMatchedBar) kwMatchedBar.style.width = `${matchedPct}%`;
+        if (kwMissingBar) kwMissingBar.style.width = `${missingPct}%`;
+
+        if (kwMatchedMeta) kwMatchedMeta.textContent = `Matched: ${matched.length}/${total} (${matchedPct}%)`;
+        if (kwMissingMeta) kwMissingMeta.textContent = `Missing: ${missing.length}/${total} (${missingPct}%)`;
+
+        // lists
+        fillList(warningsList, (data.ats_checks && data.ats_checks.warnings) ? data.ats_checks.warnings : []);
+        fillList(suggestionsList, data.suggestions || []);
+        fillList(jdMatchedList, matched);
+        fillList(jdMissingList, missing);
+
+        statusEl.textContent = "Done ✅ (JD Match)";
+        jdResultsEl.style.display = "grid";
+      } catch (err) {
+        statusEl.textContent = "Error: " + err.message + " (Is Flask running?)";
+        statusEl.className = "status error";
+      }
+    });
+
+    aiBtn.addEventListener("click", async () => {
+      resetUI();
+
+      const role = roleEl.value;
+      const resume_text = resumeTextEl.value.trim();
+      const jd_text = jdTextEl.value.trim();
+
+      if (!role) {
+        statusEl.textContent = "Please select a role.";
+        statusEl.className = "status error";
+        return;
+      }
+      if (!resume_text) {
+        statusEl.textContent = "Please paste resume text first (or upload a resume).";
+        statusEl.className = "status error";
+        return;
+      }
+      if (!jd_text) {
+        statusEl.textContent = "Please paste the Job Description text for AI suggestions.";
+        statusEl.className = "status error";
+        return;
+      }
+
+      statusEl.textContent = "Generating AI-style suggestions...";
+
+      try {
+        const res = await fetch(apiAiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role, resume_text, jd_text })
+        });
+
+        if (!res.ok) throw new Error("API request failed: " + res.status);
+
+        const data = await res.json();
+
+        const sugg = data.ai_suggestions || {};
+        fillList(aiBulletsList, sugg.rewritten_bullets || []);
+        fillList(aiTipsList, sugg.tips || []);
+        fillList(aiMissingList, sugg.missing_keywords || data.missing_keywords || []);
+
+        statusEl.textContent = "Done ✅ (AI Suggestions)";
+        aiResultsEl.style.display = "grid";
+      } catch (err) {
+        statusEl.textContent = "Error: " + err.message + " (Is Flask running?)";
+        statusEl.className = "status error";
+      }
+    });
+
+    loadRoles();
+  </script>
+</body>
+</html>
