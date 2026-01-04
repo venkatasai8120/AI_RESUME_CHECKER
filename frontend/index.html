@@ -5,7 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Skill Gap Analyzer</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 24px; max-width: 1100px; }
+    /* =============================
+       BACKGROUND + WATERMARK (NEW)
+    ============================== */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+
+      /* background image + dark overlay */
+      background:
+        linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
+        url("assets/background.jpg") no-repeat center center fixed;
+      background-size: cover;
+
+      /* text on dark background */
+      color: #ffffff;
+    }
+
+    /* watermark */
+    .watermark {
+      position: fixed;
+      bottom: 16px;
+      right: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      opacity: 0.35;
+      color: #ffffff;
+      pointer-events: none;
+      z-index: 9999;
+      user-select: none;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    }
+
+    /* =============================
+       YOUR ORIGINAL STYLES (kept)
+    ============================== */
     h1 { margin-bottom: 8px; }
     label { display: block; margin-top: 14px; font-weight: 600; }
 
@@ -17,14 +56,23 @@
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+
+    /* card readable on dark bg */
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(255,255,255,0.95);
+      color: #000;
+    }
+
     .card h3 { margin: 0 0 8px 0; font-size: 16px; }
     ul { margin: 0; padding-left: 18px; }
     .status { margin-top: 12px; }
-    .error { color: #b00020; }
-    .pill { display:inline-block; padding: 6px 10px; border:1px solid #ddd; border-radius: 999px; }
+    .error { color: #ffb3b3; } /* readable on dark bg */
+    .pill { display:inline-block; padding: 6px 10px; border:1px solid #ddd; border-radius: 999px; background:#fff; color:#000; }
     .score { font-size: 22px; font-weight: 700; }
-    .muted { color:#555; font-size: 13px; }
+    .muted { color:#dddddd; font-size: 13px; } /* readable on dark bg */
     .btnRow { display:flex; gap: 10px; margin-top: 10px; }
     .btnRow button { width: 33.33%; }
 
@@ -33,11 +81,15 @@
     .uploadRow button { margin-top: 6px; }
 
     /* NEW: simple bar visuals (no libraries) */
-    .barTrack { border:1px solid #ddd; border-radius:10px; height:14px; overflow:hidden; }
+    .barTrack { border:1px solid #ddd; border-radius:10px; height:14px; overflow:hidden; background:#eee; }
     .barFill { height:14px; width:0%; background:#4c8bf5; transition: width 0.5s ease; }
   </style>
 </head>
 <body>
+
+  <!-- NEW: watermark -->
+  <div class="watermark">PVSR</div>
+
   <h1>AI-Powered Job Application & Skill Gap Analyzer</h1>
   <p class="muted">Role Gap + JD Match Score + AI Resume Suggestions (rule-based AI-ready).</p>
 
@@ -46,7 +98,7 @@
     <option value="">Loading roles...</option>
   </select>
 
-  <!-- NEW: Resume Upload -->
+  <!-- Resume Upload -->
   <div class="uploadRow">
     <div>
       <label for="resumeFile">Upload Resume (PDF or DOCX)</label>
@@ -99,34 +151,34 @@
       <h3>JD Match Score</h3>
       <div class="pill"><span class="score" id="scoreEl">0%</span></div>
 
-      <!-- NEW: Progress bar for score -->
+      <!-- Progress bar for score -->
       <div style="margin-top:10px;">
-        <div class="muted">Match Score</div>
+        <div class="muted" style="color:#555;">Match Score</div>
         <div class="barTrack">
           <div id="scoreBar" class="barFill"></div>
         </div>
       </div>
 
-      <!-- NEW: Keyword coverage bars -->
+      <!-- Keyword coverage bars -->
       <div style="margin-top:12px;">
-        <div class="muted">Keyword Coverage</div>
+        <div class="muted" style="color:#555;">Keyword Coverage</div>
 
         <div style="margin-top:8px;">
-          <div class="muted" id="kwMatchedMeta"></div>
+          <div class="muted" id="kwMatchedMeta" style="color:#555;"></div>
           <div class="barTrack">
             <div id="kwMatchedBar" class="barFill"></div>
           </div>
         </div>
 
         <div style="margin-top:10px;">
-          <div class="muted" id="kwMissingMeta"></div>
+          <div class="muted" id="kwMissingMeta" style="color:#555;"></div>
           <div class="barTrack">
             <div id="kwMissingBar" class="barFill"></div>
           </div>
         </div>
       </div>
 
-      <p class="muted" id="scoreMeta" style="margin-top:10px;"></p>
+      <p class="muted" id="scoreMeta" style="margin-top:10px; color:#555;"></p>
 
       <h3 style="margin-top:12px;">ATS Warnings</h3>
       <ul id="warningsList"></ul>
@@ -137,10 +189,10 @@
 
     <div class="card">
       <h3>JD Keyword Coverage</h3>
-      <p class="muted">Matched keywords</p>
+      <p class="muted" style="color:#555;">Matched keywords</p>
       <ul id="jdMatchedList"></ul>
 
-      <p class="muted" style="margin-top:12px;">Missing keywords</p>
+      <p class="muted" style="margin-top:12px; color:#555;">Missing keywords</p>
       <ul id="jdMissingList"></ul>
     </div>
   </div>
@@ -166,14 +218,14 @@
     const apiMatchJdUrl = "http://127.0.0.1:5000/match_jd";
     const apiAiUrl = "http://127.0.0.1:5000/ai_suggestions";
 
-    // NEW: upload endpoint
+    // upload endpoint
     const apiUploadUrl = "http://127.0.0.1:5000/upload_resume";
 
     const roleEl = document.getElementById("role");
     const resumeTextEl = document.getElementById("resumeText");
     const jdTextEl = document.getElementById("jdText");
 
-    // NEW: upload controls
+    // upload controls
     const resumeFileEl = document.getElementById("resumeFile");
     const uploadBtn = document.getElementById("uploadBtn");
 
@@ -202,7 +254,7 @@
     const aiTipsList = document.getElementById("aiTipsList");
     const aiMissingList = document.getElementById("aiMissingList");
 
-    // NEW: visualization elements
+    // visualization elements
     const scoreBar = document.getElementById("scoreBar");
     const kwMatchedBar = document.getElementById("kwMatchedBar");
     const kwMissingBar = document.getElementById("kwMissingBar");
@@ -249,7 +301,7 @@
       if (kwMissingMeta) kwMissingMeta.textContent = "";
     }
 
-    // NEW: upload handler
+    // upload handler
     uploadBtn.addEventListener("click", async () => {
       resetUI();
 
@@ -368,7 +420,7 @@
         scoreEl.textContent = `${data.match_score}%`;
         scoreMeta.textContent = `JD targets source: ${data.jd_targets_source} • Weights: JD ${data.weights.jd}, Role ${data.weights.role}`;
 
-        // visualization bars
+        // bars
         if (scoreBar) scoreBar.style.width = `${data.match_score}%`;
 
         const matched = (data.keyword_coverage && data.keyword_coverage.matched) ? data.keyword_coverage.matched : [];
