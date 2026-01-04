@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Skill Gap Analyzer</title>
+
   <style>
     /* =============================
-       BACKGROUND + WATERMARK (NEW)
+       BACKGROUND + BASE LAYOUT
     ============================== */
     body {
       font-family: Arial, sans-serif;
@@ -16,17 +17,92 @@
       margin-left: auto;
       margin-right: auto;
 
-      /* background image + dark overlay */
+      /* Background image + dark overlay */
       background:
-        linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
+        linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
         url("assets/background.jpg") no-repeat center center fixed;
       background-size: cover;
 
-      /* text on dark background */
       color: #ffffff;
     }
 
-    /* watermark */
+    h1 { margin-bottom: 8px; color: #ffffff; }
+    label { display: block; margin-top: 14px; font-weight: 600; }
+
+    /* inputs */
+    select, textarea, button, input[type="file"] {
+      width: 100%;
+      margin-top: 6px;
+      padding: 10px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    textarea { min-height: 140px; resize: vertical; }
+    button { cursor: pointer; margin-top: 12px; }
+
+    .muted { color:#dddddd; font-size: 13px; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+
+    /* cards */
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      color: #000;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .card h3 { margin: 0 0 8px 0; font-size: 16px; color:#000; }
+
+    ul { margin: 0; padding-left: 18px; }
+
+    .status { margin-top: 12px; }
+    .error { color: #ffb3b3; }
+
+    .pill {
+      display:inline-block;
+      padding: 6px 10px;
+      border:1px solid #ddd;
+      border-radius: 999px;
+      background:#fff;
+      color:#000;
+    }
+    .score { font-size: 22px; font-weight: 700; }
+
+    .btnRow { display:flex; gap: 10px; margin-top: 10px; }
+    .btnRow button { width: 33.33%; }
+
+    /* upload row layout */
+    .uploadRow {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 10px;
+      align-items: end;
+      margin-top: 10px;
+    }
+    .uploadRow button { margin-top: 6px; }
+
+    /* progress bars */
+    .barTrack {
+      border:1px solid #ddd;
+      border-radius:10px;
+      height:14px;
+      overflow:hidden;
+      background:#eee;
+    }
+    .barFill {
+      height:14px;
+      width:0%;
+      background:#4c8bf5;
+      transition: width 0.5s ease;
+    }
+
+    /* =============================
+       WATERMARK
+    ============================== */
     .watermark {
       position: fixed;
       bottom: 16px;
@@ -39,55 +115,12 @@
       pointer-events: none;
       z-index: 9999;
       user-select: none;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
     }
-
-    /* =============================
-       YOUR ORIGINAL STYLES (kept)
-    ============================== */
-    h1 { margin-bottom: 8px; }
-    label { display: block; margin-top: 14px; font-weight: 600; }
-
-    /* UPDATED: include file input styling */
-    select, textarea, button, input[type="file"] { width: 100%; margin-top: 6px; padding: 10px; font-size: 14px; }
-
-    textarea { min-height: 140px; resize: vertical; }
-    button { cursor: pointer; margin-top: 12px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-
-    /* card readable on dark bg */
-    .card {
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 12px;
-      background: rgba(255,255,255,0.95);
-      color: #000;
-    }
-
-    .card h3 { margin: 0 0 8px 0; font-size: 16px; }
-    ul { margin: 0; padding-left: 18px; }
-    .status { margin-top: 12px; }
-    .error { color: #ffb3b3; } /* readable on dark bg */
-    .pill { display:inline-block; padding: 6px 10px; border:1px solid #ddd; border-radius: 999px; background:#fff; color:#000; }
-    .score { font-size: 22px; font-weight: 700; }
-    .muted { color:#dddddd; font-size: 13px; } /* readable on dark bg */
-    .btnRow { display:flex; gap: 10px; margin-top: 10px; }
-    .btnRow button { width: 33.33%; }
-
-    /* NEW: upload row layout */
-    .uploadRow { display: grid; grid-template-columns: 1fr 220px; gap: 10px; align-items: end; margin-top: 10px; }
-    .uploadRow button { margin-top: 6px; }
-
-    /* NEW: simple bar visuals (no libraries) */
-    .barTrack { border:1px solid #ddd; border-radius:10px; height:14px; overflow:hidden; background:#eee; }
-    .barFill { height:14px; width:0%; background:#4c8bf5; transition: width 0.5s ease; }
   </style>
 </head>
-<body>
 
-  <!-- NEW: watermark -->
+<body>
   <div class="watermark">PVSR</div>
 
   <h1>AI-Powered Job Application & Skill Gap Analyzer</h1>
@@ -113,11 +146,11 @@
   <div class="row">
     <div>
       <label for="resumeText">Resume Text</label>
-      <textarea id="resumeText" placeholder="Paste your resume text here..."></textarea>
+      <textarea id="resumeText" placeholder="Paste your resume text here."></textarea>
     </div>
     <div>
       <label for="jdText">Job Description Text</label>
-      <textarea id="jdText" placeholder="Paste the job description here (for Match JD / AI Suggestions)..."></textarea>
+      <textarea id="jdText" placeholder="Paste the job description here (for Match JD / AI Suggestions)."></textarea>
     </div>
   </div>
 
@@ -213,19 +246,21 @@
   </div>
 
   <script>
-    const apiAnalyzeUrl = "http://127.0.0.1:5000/analyze_text";
-    const apiRolesUrl = "http://127.0.0.1:5000/roles";
-    const apiMatchJdUrl = "http://127.0.0.1:5000/match_jd";
-    const apiAiUrl = "http://127.0.0.1:5000/ai_suggestions";
+    // ✅ IMPORTANT FIX:
+    // Use SAME-ORIGIN relative URLs so it works on Render (and locally).
+    // On Render, your site is like https://xxxx.onrender.com, so /roles, /match_jd etc will work.
+    const API_BASE = ""; // keep empty for same domain
 
-    // upload endpoint
-    const apiUploadUrl = "http://127.0.0.1:5000/upload_resume";
+    const apiAnalyzeUrl = `${API_BASE}/analyze_text`;
+    const apiRolesUrl = `${API_BASE}/roles`;
+    const apiMatchJdUrl = `${API_BASE}/match_jd`;
+    const apiAiUrl = `${API_BASE}/ai_suggestions`;
+    const apiUploadUrl = `${API_BASE}/upload_resume`;
 
     const roleEl = document.getElementById("role");
     const resumeTextEl = document.getElementById("resumeText");
     const jdTextEl = document.getElementById("jdText");
 
-    // upload controls
     const resumeFileEl = document.getElementById("resumeFile");
     const uploadBtn = document.getElementById("uploadBtn");
 
@@ -247,6 +282,7 @@
     const scoreMeta = document.getElementById("scoreMeta");
     const warningsList = document.getElementById("warningsList");
     const suggestionsList = document.getElementById("suggestionsList");
+
     const jdMatchedList = document.getElementById("jdMatchedList");
     const jdMissingList = document.getElementById("jdMissingList");
 
@@ -254,16 +290,44 @@
     const aiTipsList = document.getElementById("aiTipsList");
     const aiMissingList = document.getElementById("aiMissingList");
 
-    // visualization elements
+    // bars
     const scoreBar = document.getElementById("scoreBar");
     const kwMatchedBar = document.getElementById("kwMatchedBar");
     const kwMissingBar = document.getElementById("kwMissingBar");
     const kwMatchedMeta = document.getElementById("kwMatchedMeta");
     const kwMissingMeta = document.getElementById("kwMissingMeta");
 
+    function resetUI() {
+      statusEl.className = "status";
+      roleResultsEl.style.display = "none";
+      jdResultsEl.style.display = "none";
+      aiResultsEl.style.display = "none";
+
+      extractedList.innerHTML = "";
+      matchedList.innerHTML = "";
+      missingList.innerHTML = "";
+
+      warningsList.innerHTML = "";
+      suggestionsList.innerHTML = "";
+      jdMatchedList.innerHTML = "";
+      jdMissingList.innerHTML = "";
+
+      aiBulletsList.innerHTML = "";
+      aiTipsList.innerHTML = "";
+      aiMissingList.innerHTML = "";
+
+      scoreEl.textContent = "0%";
+      scoreMeta.textContent = "";
+      scoreBar.style.width = "0%";
+      kwMatchedBar.style.width = "0%";
+      kwMissingBar.style.width = "0%";
+      kwMatchedMeta.textContent = "";
+      kwMissingMeta.textContent = "";
+    }
+
     function fillList(ul, items) {
       ul.innerHTML = "";
-      (items || []).forEach(item => {
+      (items || []).forEach((item) => {
         const li = document.createElement("li");
         li.textContent = item;
         ul.appendChild(li);
@@ -273,71 +337,54 @@
     async function loadRoles() {
       try {
         const res = await fetch(apiRolesUrl);
+        if (!res.ok) throw new Error("Roles API failed: " + res.status);
         const data = await res.json();
-        roleEl.innerHTML = "";
-        data.roles.forEach(role => {
-          const option = document.createElement("option");
-          option.value = role;
-          option.textContent = role;
-          roleEl.appendChild(option);
+
+        roleEl.innerHTML = `<option value="">Select a role...</option>`;
+        (data.roles || []).forEach((r) => {
+          const opt = document.createElement("option");
+          opt.value = r;
+          opt.textContent = r;
+          roleEl.appendChild(opt);
         });
       } catch (err) {
-        roleEl.innerHTML = "<option>Error loading roles</option>";
+        roleEl.innerHTML = `<option value="">Error loading roles</option>`;
+        statusEl.textContent = "Error: " + err.message;
+        statusEl.className = "status error";
       }
     }
 
-    function resetUI() {
-      statusEl.textContent = "";
-      statusEl.className = "status";
-      roleResultsEl.style.display = "none";
-      jdResultsEl.style.display = "none";
-      aiResultsEl.style.display = "none";
-
-      // reset bars
-      if (scoreBar) scoreBar.style.width = "0%";
-      if (kwMatchedBar) kwMatchedBar.style.width = "0%";
-      if (kwMissingBar) kwMissingBar.style.width = "0%";
-      if (kwMatchedMeta) kwMatchedMeta.textContent = "";
-      if (kwMissingMeta) kwMissingMeta.textContent = "";
-    }
-
-    // upload handler
+    // Upload & extract
     uploadBtn.addEventListener("click", async () => {
       resetUI();
 
       const file = resumeFileEl.files && resumeFileEl.files[0];
       if (!file) {
-        statusEl.textContent = "Please choose a PDF or DOCX file first.";
+        statusEl.textContent = "Please choose a resume file first.";
         statusEl.className = "status error";
         return;
       }
 
-      statusEl.textContent = "Uploading & extracting resume...";
-      statusEl.className = "status";
+      statusEl.textContent = "Uploading and extracting resume text...";
 
       try {
         const fd = new FormData();
-        fd.append("resume_file", file);
+        fd.append("file", file);
 
-        const res = await fetch(apiUploadUrl, {
-          method: "POST",
-          body: fd
-        });
+        const res = await fetch(apiUploadUrl, { method: "POST", body: fd });
+        if (!res.ok) throw new Error("Upload failed: " + res.status);
 
         const data = await res.json();
+        resumeTextEl.value = data.resume_text || "";
 
-        if (!res.ok) {
-          throw new Error(data && data.error ? data.error : ("Upload failed: " + res.status));
-        }
-
-        resumeTextEl.value = data.extracted_text || "";
-        statusEl.textContent = "Resume extracted ✅ You can now run Analyze / Match JD / AI Improve.";
+        statusEl.textContent = "Done ✅ (Resume extracted)";
       } catch (err) {
-        statusEl.textContent = "Error: " + err.message + " (Is Flask running?)";
+        statusEl.textContent = "Error: " + err.message;
         statusEl.className = "status error";
       }
     });
 
+    // Role gap
     analyzeBtn.addEventListener("click", async () => {
       resetUI();
 
@@ -368,18 +415,19 @@
 
         const data = await res.json();
 
-        fillList(extractedList, data.extracted_skills);
-        fillList(matchedList, data.matched_skills);
-        fillList(missingList, data.missing_skills);
+        fillList(extractedList, data.resume_found || []);
+        fillList(matchedList, data.matched || []);
+        fillList(missingList, data.missing || []);
 
         statusEl.textContent = "Done ✅ (Role Gap)";
         roleResultsEl.style.display = "grid";
       } catch (err) {
-        statusEl.textContent = "Error: " + err.message + " (Is Flask running?)";
+        statusEl.textContent = "Error: " + err.message;
         statusEl.className = "status error";
       }
     });
 
+    // JD match
     matchBtn.addEventListener("click", async () => {
       resetUI();
 
@@ -398,12 +446,12 @@
         return;
       }
       if (!jd_text) {
-        statusEl.textContent = "Please paste the Job Description text for Match JD.";
+        statusEl.textContent = "Please paste the Job Description text.";
         statusEl.className = "status error";
         return;
       }
 
-      statusEl.textContent = "Computing JD match score...";
+      statusEl.textContent = "Matching JD (ATS Score)...";
 
       try {
         const res = await fetch(apiMatchJdUrl, {
@@ -416,40 +464,39 @@
 
         const data = await res.json();
 
-        // score text
-        scoreEl.textContent = `${data.match_score}%`;
-        scoreMeta.textContent = `JD targets source: ${data.jd_targets_source} • Weights: JD ${data.weights.jd}, Role ${data.weights.role}`;
+        // score
+        const score = Math.round((data.match_score || 0) * 100);
+        scoreEl.textContent = `${score}%`;
+        scoreBar.style.width = `${score}%`;
 
-        // bars
-        if (scoreBar) scoreBar.style.width = `${data.match_score}%`;
+        // keyword coverage
+        const cov = data.keyword_coverage || { matched: [], missing: [] };
+        const total = (cov.matched?.length || 0) + (cov.missing?.length || 0);
+        const matchedPct = total ? Math.round((cov.matched.length / total) * 100) : 0;
+        const missingPct = total ? Math.round((cov.missing.length / total) * 100) : 0;
 
-        const matched = (data.keyword_coverage && data.keyword_coverage.matched) ? data.keyword_coverage.matched : [];
-        const missing = (data.keyword_coverage && data.keyword_coverage.missing) ? data.keyword_coverage.missing : [];
-        const total = matched.length + missing.length;
+        kwMatchedMeta.textContent = `Matched: ${cov.matched.length}/${total} (${matchedPct}%)`;
+        kwMissingMeta.textContent = `Missing: ${cov.missing.length}/${total} (${missingPct}%)`;
+        kwMatchedBar.style.width = `${matchedPct}%`;
+        kwMissingBar.style.width = `${missingPct}%`;
 
-        const matchedPct = total ? Math.round((matched.length / total) * 100) : 0;
-        const missingPct = total ? Math.round((missing.length / total) * 100) : 0;
+        scoreMeta.textContent = data.score_meta || "";
 
-        if (kwMatchedBar) kwMatchedBar.style.width = `${matchedPct}%`;
-        if (kwMissingBar) kwMissingBar.style.width = `${missingPct}%`;
-
-        if (kwMatchedMeta) kwMatchedMeta.textContent = `Matched: ${matched.length}/${total} (${matchedPct}%)`;
-        if (kwMissingMeta) kwMissingMeta.textContent = `Missing: ${missing.length}/${total} (${missingPct}%)`;
-
-        // lists
-        fillList(warningsList, (data.ats_checks && data.ats_checks.warnings) ? data.ats_checks.warnings : []);
+        const warnings = (data.ats_checks && data.ats_checks.warnings) ? data.ats_checks.warnings : [];
+        fillList(warningsList, warnings);
         fillList(suggestionsList, data.suggestions || []);
-        fillList(jdMatchedList, matched);
-        fillList(jdMissingList, missing);
+        fillList(jdMatchedList, cov.matched || []);
+        fillList(jdMissingList, cov.missing || []);
 
         statusEl.textContent = "Done ✅ (JD Match)";
         jdResultsEl.style.display = "grid";
       } catch (err) {
-        statusEl.textContent = "Error: " + err.message + " (Is Flask running?)";
+        statusEl.textContent = "Error: " + err.message;
         statusEl.className = "status error";
       }
     });
 
+    // AI suggestions
     aiBtn.addEventListener("click", async () => {
       resetUI();
 
@@ -494,7 +541,7 @@
         statusEl.textContent = "Done ✅ (AI Suggestions)";
         aiResultsEl.style.display = "grid";
       } catch (err) {
-        statusEl.textContent = "Error: " + err.message + " (Is Flask running?)";
+        statusEl.textContent = "Error: " + err.message;
         statusEl.className = "status error";
       }
     });
