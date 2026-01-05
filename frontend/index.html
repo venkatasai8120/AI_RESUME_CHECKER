@@ -6,9 +6,6 @@
   <title>Skill Gap Analyzer</title>
 
   <style>
-    /* =============================
-       BACKGROUND + BASE LAYOUT
-    ============================== */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -17,7 +14,6 @@
       margin-left: auto;
       margin-right: auto;
 
-      /* Background image + dark overlay */
       background:
         linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
         url("assets/background.jpg") no-repeat center center fixed;
@@ -29,7 +25,6 @@
     h1 { margin-bottom: 8px; color: #ffffff; }
     label { display: block; margin-top: 14px; font-weight: 600; }
 
-    /* inputs */
     select, textarea, button, input[type="file"] {
       width: 100%;
       margin-top: 6px;
@@ -47,7 +42,6 @@
     .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
 
-    /* cards */
     .card {
       background: rgba(255, 255, 255, 0.95);
       color: #000;
@@ -75,7 +69,6 @@
     .btnRow { display:flex; gap: 10px; margin-top: 10px; }
     .btnRow button { width: 33.33%; }
 
-    /* upload row layout */
     .uploadRow {
       display: grid;
       grid-template-columns: 1fr 220px;
@@ -85,7 +78,6 @@
     }
     .uploadRow button { margin-top: 6px; }
 
-    /* progress bars */
     .barTrack {
       border:1px solid #ddd;
       border-radius:10px;
@@ -100,9 +92,6 @@
       transition: width 0.5s ease;
     }
 
-    /* =============================
-       WATERMARK
-    ============================== */
     .watermark {
       position: fixed;
       bottom: 16px;
@@ -131,7 +120,6 @@
     <option value="">Loading roles...</option>
   </select>
 
-  <!-- Resume Upload -->
   <div class="uploadRow">
     <div>
       <label for="resumeFile">Upload Resume (PDF or DOCX)</label>
@@ -162,7 +150,6 @@
 
   <div class="status" id="status"></div>
 
-  <!-- ROLE GAP RESULTS -->
   <div class="grid3" id="roleResults" style="display:none;">
     <div class="card">
       <h3>Extracted Skills (from Resume)</h3>
@@ -178,13 +165,11 @@
     </div>
   </div>
 
-  <!-- JD MATCH RESULTS -->
   <div class="grid2" id="jdResults" style="display:none;">
     <div class="card">
       <h3>JD Match Score</h3>
       <div class="pill"><span class="score" id="scoreEl">0%</span></div>
 
-      <!-- Progress bar for score -->
       <div style="margin-top:10px;">
         <div class="muted" style="color:#555;">Match Score</div>
         <div class="barTrack">
@@ -192,7 +177,6 @@
         </div>
       </div>
 
-      <!-- Keyword coverage bars -->
       <div style="margin-top:12px;">
         <div class="muted" style="color:#555;">Keyword Coverage</div>
 
@@ -230,7 +214,6 @@
     </div>
   </div>
 
-  <!-- AI SUGGESTIONS RESULTS -->
   <div class="grid2" id="aiResults" style="display:none;">
     <div class="card">
       <h3>AI-Style Rewritten Bullets</h3>
@@ -246,10 +229,7 @@
   </div>
 
   <script>
-    // ✅ IMPORTANT FIX:
-    // Use SAME-ORIGIN relative URLs so it works on Render (and locally).
-    // On Render, your site is like https://xxxx.onrender.com, so /roles, /match_jd etc will work.
-    const API_BASE = ""; // keep empty for same domain
+    const API_BASE = "";
 
     const apiAnalyzeUrl = `${API_BASE}/analyze_text`;
     const apiRolesUrl = `${API_BASE}/roles`;
@@ -290,7 +270,6 @@
     const aiTipsList = document.getElementById("aiTipsList");
     const aiMissingList = document.getElementById("aiMissingList");
 
-    // bars
     const scoreBar = document.getElementById("scoreBar");
     const kwMatchedBar = document.getElementById("kwMatchedBar");
     const kwMissingBar = document.getElementById("kwMissingBar");
@@ -354,7 +333,7 @@
       }
     }
 
-    // Upload & extract
+    // Upload & extract (FIXED)
     uploadBtn.addEventListener("click", async () => {
       resetUI();
 
@@ -369,12 +348,17 @@
 
       try {
         const fd = new FormData();
-        fd.append("file", file);
+        // IMPORTANT: backend expects resume_file (but also accepts file now)
+        fd.append("resume_file", file);
 
         const res = await fetch(apiUploadUrl, { method: "POST", body: fd });
-        if (!res.ok) throw new Error("Upload failed: " + res.status);
-
         const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error((data && (data.error || data.details)) ? (data.error || data.details) : ("Upload failed: " + res.status));
+        }
+
+        // IMPORTANT: backend returns resume_text now
         resumeTextEl.value = data.resume_text || "";
 
         statusEl.textContent = "Done ✅ (Resume extracted)";
@@ -411,9 +395,8 @@
           body: JSON.stringify({ role, resume_text })
         });
 
-        if (!res.ok) throw new Error("API request failed: " + res.status);
-
         const data = await res.json();
+        if (!res.ok) throw new Error((data && data.error) ? data.error : ("API request failed: " + res.status));
 
         fillList(extractedList, data.resume_found || []);
         fillList(matchedList, data.matched || []);
@@ -460,16 +443,13 @@
           body: JSON.stringify({ role, resume_text, jd_text })
         });
 
-        if (!res.ok) throw new Error("API request failed: " + res.status);
-
         const data = await res.json();
+        if (!res.ok) throw new Error((data && data.error) ? data.error : ("API request failed: " + res.status));
 
-        // score
-        const score = Math.round((data.match_score || 0) * 100);
+        const score = Math.round((data.match_score || 0));
         scoreEl.textContent = `${score}%`;
         scoreBar.style.width = `${score}%`;
 
-        // keyword coverage
         const cov = data.keyword_coverage || { matched: [], missing: [] };
         const total = (cov.matched?.length || 0) + (cov.missing?.length || 0);
         const matchedPct = total ? Math.round((cov.matched.length / total) * 100) : 0;
@@ -529,9 +509,8 @@
           body: JSON.stringify({ role, resume_text, jd_text })
         });
 
-        if (!res.ok) throw new Error("API request failed: " + res.status);
-
         const data = await res.json();
+        if (!res.ok) throw new Error((data && data.error) ? data.error : ("API request failed: " + res.status));
 
         const sugg = data.ai_suggestions || {};
         fillList(aiBulletsList, sugg.rewritten_bullets || []);

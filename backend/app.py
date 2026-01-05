@@ -1,18 +1,21 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from pathlib import Path
-import json
 
 from analyzer import gap_for_role_from_text
 from matcher import compute_jd_resume_match
 
-# Optional: if you added upload feature
+# Optional: resume upload feature
 try:
     from resume_parser import extract_text_from_uploaded_file
 except Exception:
     extract_text_from_uploaded_file = None
 
-# Optional: if you added AI suggestions endpoint
+# Optional: AI suggestions endpoint
 try:
     from ai_suggester import generate_ats_bullets
 except Exception:
@@ -51,10 +54,11 @@ with open(SKILLS_MASTER_PATH, "r", encoding="utf-8") as f:
 def home():
     return send_from_directory(FRONTEND_DIR, "index.html")
 
+
 @app.route("/assets/<path:filename>")
 def assets(filename):
-    # Serves: /assets/background.jpg etc.
     return send_from_directory(ASSETS_DIR, filename)
+
 
 @app.route("/healthz")
 def healthz():
@@ -79,9 +83,9 @@ def analyze_text():
 
     return jsonify({
         "role": role,
-        "extracted_skills": resume_found,
-        "matched_skills": matched,
-        "missing_skills": missing
+        "resume_found": resume_found,
+        "matched": matched,
+        "missing": missing
     })
 
 
@@ -97,25 +101,48 @@ def match_jd():
 
 
 # -----------------------------
-# Resume upload endpoint (if you added it)
+# Resume upload endpoint (fixed)
 # -----------------------------
 @app.route("/upload_resume", methods=["POST"])
 def upload_resume():
+    """
+    Expects multipart/form-data with field name: resume_file (or file)
+    Returns resume_text extracted from uploaded PDF/DOCX.
+    """
     if extract_text_from_uploaded_file is None:
-        return jsonify({"error": "resume_parser.py not available on server."}), 500
+        return jsonify({
+            "error": "resume_parser.py failed to import extract_text_from_uploaded_file(). "
+                     "Make sure resume_parser.py contains that function."
+        }), 500
 
-    if "resume_file" not in request.files:
-        return jsonify({"error": "No file provided. Use field name 'resume_file'."}), 400
+    # Accept both names to be robust with frontend code
+    file = None
+    if "resume_file" in request.files:
+        file = request.files["resume_file"]
+    elif "file" in request.files:
+        file = request.files["file"]
 
-    file = request.files["resume_file"]
-    if not file or file.filename == "":
+    if file is None:
+        return jsonify({"error": "No file provided. Use field name 'resume_file' (or 'file')."}), 400
+
+    if not file or (file.filename or "").strip() == "":
         return jsonify({"error": "Empty filename."}), 400
 
-    extracted_text = extract_text_from_uploaded_file(file)
-    return jsonify({
-        "filename": file.filename,
-        "extracted_text": extracted_text
-    })
+    try:
+        extracted_text = extract_text_from_uploaded_file(file)
+        if not (extracted_text or "").strip():
+            return jsonify({"error": "Could not extract text (file may be scanned or unsupported)."}), 422
+
+        # IMPORTANT: return resume_text because your index.html expects it
+        return jsonify({
+            "filename": file.filename,
+            "resume_text": extracted_text
+        })
+    except Exception as e:
+        return jsonify({
+            "error": "Upload processing failed",
+            "details": str(e)
+        }), 500
 
 
 # -----------------------------
@@ -131,7 +158,6 @@ def ai_suggestions():
     resume_text = data.get("resume_text", "")
     jd_text = data.get("jd_text", "")
 
-    # Use JD matcher to get missing keywords first
     match = compute_jd_resume_match(role, resume_text, jd_text)
     missing_keywords = match.get("keyword_coverage", {}).get("missing", [])
 
@@ -151,4 +177,7 @@ def ai_suggestions():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Render sets PORT env var. Locally this still works.
+    import os
+    port = int(os.environ.get("PORT", "5000"))
+    app.run(host="0.0.0.0", port=port, debug=True)
