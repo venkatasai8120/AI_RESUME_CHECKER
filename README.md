@@ -1,17 +1,15 @@
-AI Resume Checker & ATS Skill Gap Analyzer
+## AI Resume Checker & ATS Skill Gap Analyzer
+## Author: Venkata Sai Reddy Peddireddy
+## GitHub: https://github.com/venkatasai8120
+## Live Application: https://ai-resume-checker-xrzj.onrender.com
 
-Author: Venkata Sai Reddy Peddireddy
-GitHub: https://github.com/venkatasai8120
-
-Live Application: https://ai-resume-checker-xrzj.onrender.com
-
-Project Overview
+## Project Overview
 
 AI Resume Checker & ATS Skill Gap Analyzer is a full-stack web application that analyzes a candidate’s resume against a specific job description to calculate a match score, identify missing skills, evaluate ATS (Applicant Tracking System) compatibility, and provide actionable resume improvement suggestions.
 
 The application helps job seekers understand how well their resume aligns with a role before applying and assists recruiters in identifying strong candidates faster through objective resume scoring.
 
-Problem Statement
+## Problem Statement
 
 Job seekers apply to roles without knowing whether their resume matches the job description.
 
@@ -23,52 +21,7 @@ Recruiters spend significant time screening poorly matched resumes.
 
 No unified platform exists that combines resume–JD matching, skill gap analysis, ATS scoring, and improvement guidance.
 
-Target Users
-Job Seekers (Primary Users)
-
-Who they are
-
-Graduate students applying for internships or full-time roles
-
-Recent graduates struggling to get interview calls
-
-Working professionals switching roles or industries
-
-Problems faced
-
-No feedback after applying
-
-ATS rejections without explanation
-
-Skill confusion and blind applications
-
-Goals
-
-Know match percentage before applying
-
-Identify missing skills
-
-Receive ATS-friendly resume feedback
-
-Recruiters / Hiring Managers (Secondary Users)
-
-Who they are
-
-Corporate recruiters
-
-HR teams
-
-Startup hiring managers
-
-Problems faced
-
-High resume volume
-
-Manual skill screening
-
-Inconsistent resume formats
-
-Goals
+## Goals
 
 Faster screening
 
@@ -98,20 +51,20 @@ AI-style improvement suggestions are generated
 
 Results are displayed in the UI
 
-MVP Features
-Resume Upload and Text Extraction
+## MVP Features
+## Resume Upload and Text Extraction
 
 Upload resumes in PDF or DOCX format
 
 Automatically extracts clean text for analysis
 
-Job Description Input
+## Job Description Input
 
 Users paste job description text
 
 Text is cleaned and normalized
 
-Skill Extraction
+## Skill Extraction
 
 Extracts technical and soft skills
 
@@ -127,7 +80,7 @@ Skill Gap Analysis
 
 Identifies missing skills required for the role
 
-ATS Compatibility Detection
+## ATS Compatibility Detection
 
 Evaluates keyword coverage and structure
 
@@ -143,7 +96,7 @@ Does not overwrite user content
 
 Out of Scope (MVP)
 
-Job recommendations
+## Job recommendations
 
 Full resume auto-rewriting
 
@@ -153,11 +106,11 @@ User authentication
 
 Recruiter dashboards and bulk uploads
 
-System Architecture
+## System Architecture
 
 The system follows a modular architecture separating frontend, backend APIs, and processing modules.
 
-Frontend Layer
+## Frontend Layer
 
 HTML, CSS, JavaScript
 
@@ -165,13 +118,13 @@ Resume upload and JD input
 
 Results dashboard
 
-Backend Layer
+### Backend Layer
 
 Python Flask APIs
 
 Handles uploads, processing, and orchestration
 
-Processing Modules
+### Processing Modules
 
 Resume Parser
 
@@ -183,7 +136,7 @@ ATS Analyzer
 
 AI Suggestion Generator
 
-AI & Matching Pipeline
+## AI & Matching Pipeline
 
 Collect resume and job description
 
@@ -203,7 +156,7 @@ Generate AI-style suggestions
 
 Return structured JSON to frontend
 
-API Endpoints
+## API Endpoints
 
 GET /roles – Returns available job roles
 
@@ -215,7 +168,7 @@ POST /match_jd – ATS-style match scoring
 
 POST /ai_suggestions – Resume improvement suggestions
 
-Deployment & Continuous Deployment
+## Deployment & Continuous Deployment
 
 Hosted on Render
 
@@ -225,7 +178,7 @@ OS-independent file paths using pathlib
 
 Relative API URLs for local and production compatibility
 
-Key Engineering Challenges & Fixes
+## Key Engineering Challenges & Fixes
 
 Fixed CORS issues using flask-cors
 
@@ -241,7 +194,7 @@ Served static assets explicitly via Flask
 
 Cleaned Git repo using .gitignore
 
-Tech Stack
+## Tech Stack
 
 Frontend: HTML, CSS, JavaScript
 
@@ -253,7 +206,7 @@ Deployment: Render
 
 Version Control: Git, GitHub
 
-Future Enhancements
+## Future Enhancements
 
 LLM-powered resume rewriting
 
@@ -267,7 +220,7 @@ Multi-role comparison
 
 Optional database persistence
 
-Key Takeaways
+## Key Takeaways
 
 This project demonstrates:
 
